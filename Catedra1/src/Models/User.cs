@@ -9,6 +9,9 @@ namespace Catedra1.src.Models
     public class User
     {
         [Key]
+        public int Id { get; set; }
+        
+        [Required(ErrorMessage = "El RUT es obligatorio.")]
         public string Rut { get; set; } = string.Empty;
 
         [StringLength(100, MinimumLength = 3)]
@@ -19,10 +22,14 @@ namespace Catedra1.src.Models
 
         [RegularExpression(@"masculino|femenino|otro|prefiero no decirlo", ErrorMessage = "Género no válido.")]
         public string Genero { get; set; } = string.Empty;
-        
+
         [Required(ErrorMessage = "La fecha de nacimiento es obligatoria.")]
         [DataType(DataType.Date)]
-        [Display(Name = "Fecha de Nacimiento")]
-        public DateTime FechaNacimiento { get; set; }
+        public DateOnly FechaNacimiento { get; set; }
+
+        public bool IsFechaNacimientoValida()
+        {
+            return FechaNacimiento < DateOnly.FromDateTime(DateTime.Now);
+        }
     }
 }

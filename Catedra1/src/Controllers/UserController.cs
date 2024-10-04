@@ -35,11 +35,11 @@ namespace Catedra1.src.Controllers
             return Ok(user);
         }
 
-        [HttpPut("{rut}")]
-        public IActionResult Put([FromRoute] string rut, [FromBody] User user)
+        [HttpPut("{id}")]
+        public IActionResult Put([FromRoute] int id, [FromBody] User user)
         {
 
-            var userToUpdate = _context.Users.FirstOrDefault(u => u.Rut == rut);
+            var userToUpdate = _context.Users.FirstOrDefault(u => u.Id == id);
             if (userToUpdate == null)
             {
                 return NotFound();
@@ -53,10 +53,10 @@ namespace Catedra1.src.Controllers
             return Ok(userToUpdate);
         }
 
-        [HttpDelete("{rut}")]
-        public IActionResult Delete([FromRoute] string rut)
+        [HttpDelete("{id}")]
+        public IActionResult Delete([FromRoute] int id)
         {
-            var user = _context.Users.FirstOrDefault(u => u.Rut == rut);
+            var user = _context.Users.FirstOrDefault(u => u.Id == id);
             if (user == null)
             {
                 return NotFound();

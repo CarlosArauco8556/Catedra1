@@ -24,7 +24,7 @@ namespace Catedra1.src.Data
                         .RuleFor(u => u.Name, f => f.Person.FullName)
                         .RuleFor(u => u.CorreoElectronico, f => f.Person.Email)
                         .RuleFor(u => u.Genero, f => f.PickRandom(new[] { "masculino", "femenino", "otro", "prefiero no decirlo" }))
-                        .RuleFor(u => u.FechaNacimiento, f => f.Date.Past(f.Random.Number(18, 65)));
+                        .RuleFor(u => u.FechaNacimiento, f => DateOnly.FromDateTime(f.Date.Past(f.Random.Number(18, 65))));
                     var users = userFaker.Generate(10);
                     context.Users.AddRange(users);
                     context.SaveChanges();

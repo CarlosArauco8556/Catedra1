@@ -19,14 +19,15 @@ namespace Catedra1.src.Data.Migrations
 
             modelBuilder.Entity("Catedra1.src.Models.User", b =>
                 {
-                    b.Property<string>("Rut")
-                        .HasColumnType("TEXT");
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("INTEGER");
 
                     b.Property<string>("CorreoElectronico")
                         .IsRequired()
                         .HasColumnType("TEXT");
 
-                    b.Property<DateTime>("FechaNacimiento")
+                    b.Property<DateOnly>("FechaNacimiento")
                         .HasColumnType("TEXT");
 
                     b.Property<string>("Genero")
@@ -38,7 +39,11 @@ namespace Catedra1.src.Data.Migrations
                         .HasMaxLength(100)
                         .HasColumnType("TEXT");
 
-                    b.HasKey("Rut");
+                    b.Property<string>("Rut")
+                        .IsRequired()
+                        .HasColumnType("TEXT");
+
+                    b.HasKey("Id");
 
                     b.ToTable("Users");
                 });
