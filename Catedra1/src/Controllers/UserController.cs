@@ -21,29 +21,81 @@ namespace Catedra1.src.Controllers
         }
 
         [HttpGet]
-        public IActionResult Get()
+        public IActionResult Get(string? sort = null, string? gender = null)
         {
-            var users = _context.Users.ToList();
+            var usersQuery = _context.Users.AsQueryable();
+
+            if (!string.IsNullOrEmpty(gender))
+            {
+                var validGenders = new[] { "masculino", "femenino", "otro", "prefiero no decirlo" };
+                if (!validGenders.Contains(gender.ToLower()))
+                {
+                    return BadRequest(new { Message = "Filtro de género inválido." });
+                }
+
+                usersQuery = usersQuery.Where(u => u.Genero.ToLower() == gender.ToLower());
+            }
+
+            if (!string.IsNullOrEmpty(sort))
+            {
+                if (sort.ToLower() == "asc")
+                {
+                    usersQuery = usersQuery.OrderBy(u => u.Name);
+                }
+                else if (sort.ToLower() == "desc")
+                {
+                    usersQuery = usersQuery.OrderByDescending(u => u.Name);
+                }
+                else
+                {
+                    return BadRequest(new { Message = "Valor de ordenación inválido. Usar 'asc' o 'desc'." });
+                }
+            }
+
+            var users = usersQuery.ToList();
+
             return Ok(users);
         }
         
         [HttpPost]
         public IActionResult Post([FromBody] User user)
         {
+            var existingUser = _context.Users.FirstOrDefault(u => u.Rut == user.Rut);
+            if (existingUser != null)
+            {
+                return Conflict(new { Message = "El RUT ya existe." });
+            }
+
+            if (user.FechaNacimiento >= DateOnly.FromDateTime(DateTime.Now))
+            {
+                return BadRequest(new { Message = "La fecha de nacimiento debe ser menor a la fecha actual." });
+            }
+
             _context.Users.Add(user);
             _context.SaveChanges();
-            return Ok(user);
+
+            return CreatedAtAction(nameof(Post), new { id = user.Id }, user);
         }
 
         [HttpPut("{id}")]
         public IActionResult Put([FromRoute] int id, [FromBody] User user)
         {
-
             var userToUpdate = _context.Users.FirstOrDefault(u => u.Id == id);
             if (userToUpdate == null)
             {
-                return NotFound();
+                return NotFound(new { Message = "Usuario no encontrado." });
             }
+
+            if (user.Rut != userToUpdate.Rut && _context.Users.Any(u => u.Rut == user.Rut))
+            {
+                return BadRequest(new { Message = "El RUT ya existe." });
+            }
+
+            if (user.FechaNacimiento >= DateOnly.FromDateTime(DateTime.Now))
+            {
+                return BadRequest(new { Message = "La fecha de nacimiento debe ser menor a la fecha actual." });
+            }
+            
             userToUpdate.Rut = user.Rut;
             userToUpdate.Name = user.Name;
             userToUpdate.CorreoElectronico = user.CorreoElectronico;
@@ -59,11 +111,11 @@ namespace Catedra1.src.Controllers
             var user = _context.Users.FirstOrDefault(u => u.Id == id);
             if (user == null)
             {
-                return NotFound();
+                return NotFound(new{ Message = "Usuario no encontrado."});
             }
             _context.Users.Remove(user);
             _context.SaveChanges();
-            return Ok("User Deleted");
+            return Ok("Usario eliminado exitosamente");
         }
 
     }
