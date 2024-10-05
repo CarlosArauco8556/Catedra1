@@ -8,9 +8,9 @@ namespace Catedra1.src.Interfaces
 {
     public interface IUserRepository
     {
-        Task<List<User>> Get();
-        Task<User> Post(User user);
-        Task<User?> Put(int id, User user);
-        Task<User?> Delete(int id);
+        List<User> Get(string? sort = null, string? gender = null);
+        User Post(User user);
+        User? Put(int id, User user);
+        User? Delete(int id);
     }
 }

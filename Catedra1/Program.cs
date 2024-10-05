@@ -1,4 +1,6 @@
 using Catedra1.src.Data;
+using Catedra1.src.Interfaces;
+using Catedra1.src.Repository;
 using DotNetEnv;
 using Microsoft.EntityFrameworkCore;
 
@@ -10,6 +12,8 @@ Env.Load();
 builder.Services.AddControllers();
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
+builder.Services.AddScoped<IUserRepository, UserRepository>();
+
 
 string connectionString = Environment.GetEnvironmentVariable("DATABASE_URL") ?? "Data Source=app.db";
 builder.Services.AddDbContext<ApplicationDBContext>(opt => opt.UseSqlite(connectionString));

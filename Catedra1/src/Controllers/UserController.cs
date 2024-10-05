@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
 using Catedra1.src.Data;
+using Catedra1.src.Interfaces;
 using Catedra1.src.Models;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
@@ -14,108 +15,77 @@ namespace Catedra1.src.Controllers
     [ApiController]
     public class UserController : ControllerBase
     {
-        private readonly ApplicationDBContext _context;
-        public UserController(ApplicationDBContext context)
+        private readonly IUserRepository _userRepository;
+
+        public UserController(IUserRepository userRepository)
         {
-            _context = context;
+            _userRepository = userRepository;
         }
 
         [HttpGet]
         public IActionResult Get(string? sort = null, string? gender = null)
         {
-            var usersQuery = _context.Users.AsQueryable();
-
-            if (!string.IsNullOrEmpty(gender))
+            try
             {
-                var validGenders = new[] { "masculino", "femenino", "otro", "prefiero no decirlo" };
-                if (!validGenders.Contains(gender.ToLower()))
-                {
-                    return BadRequest(new { Message = "Filtro de género inválido." });
-                }
-
-                usersQuery = usersQuery.Where(u => u.Genero.ToLower() == gender.ToLower());
+                var users = _userRepository.Get(sort, gender);
+                return Ok(users);
             }
-
-            if (!string.IsNullOrEmpty(sort))
+            catch (ArgumentException ex)
             {
-                if (sort.ToLower() == "asc")
-                {
-                    usersQuery = usersQuery.OrderBy(u => u.Name);
-                }
-                else if (sort.ToLower() == "desc")
-                {
-                    usersQuery = usersQuery.OrderByDescending(u => u.Name);
-                }
-                else
-                {
-                    return BadRequest(new { Message = "Valor de ordenación inválido. Usar 'asc' o 'desc'." });
-                }
+                return BadRequest(new { Message = ex.Message });
             }
-
-            var users = usersQuery.ToList();
-
-            return Ok(users);
         }
         
         [HttpPost]
         public IActionResult Post([FromBody] User user)
         {
-            var existingUser = _context.Users.FirstOrDefault(u => u.Rut == user.Rut);
-            if (existingUser != null)
+            try
             {
-                return Conflict(new { Message = "El RUT ya existe." });
+                var createdUser = _userRepository.Post(user);
+                return CreatedAtAction(nameof(Post), new { id = createdUser.Id }, createdUser);
             }
-
-            if (user.FechaNacimiento >= DateOnly.FromDateTime(DateTime.Now))
+            catch (InvalidOperationException ex)
             {
-                return BadRequest(new { Message = "La fecha de nacimiento debe ser menor a la fecha actual." });
+                return Conflict(new { Message = ex.Message });
             }
-
-            _context.Users.Add(user);
-            _context.SaveChanges();
-
-            return CreatedAtAction(nameof(Post), new { id = user.Id }, user);
+            catch (ArgumentException ex)
+            {
+                return BadRequest(new { Message = ex.Message });
+            }
         }
 
         [HttpPut("{id}")]
         public IActionResult Put([FromRoute] int id, [FromBody] User user)
         {
-            var userToUpdate = _context.Users.FirstOrDefault(u => u.Id == id);
-            if (userToUpdate == null)
+            try
             {
-                return NotFound(new { Message = "Usuario no encontrado." });
-            }
+                var userToUpdate = _userRepository.Put(id, user);
+                if (userToUpdate == null)
+                {
+                    return NotFound(new { Message = "Usuario no encontrado." });
+                }
 
-            if (user.Rut != userToUpdate.Rut && _context.Users.Any(u => u.Rut == user.Rut))
-            {
-                return BadRequest(new { Message = "El RUT ya existe." });
+                return Ok(userToUpdate);
             }
-
-            if (user.FechaNacimiento >= DateOnly.FromDateTime(DateTime.Now))
+            catch (InvalidOperationException ex)
             {
-                return BadRequest(new { Message = "La fecha de nacimiento debe ser menor a la fecha actual." });
+                return Conflict(new { Message = ex.Message });
             }
-            
-            userToUpdate.Rut = user.Rut;
-            userToUpdate.Name = user.Name;
-            userToUpdate.CorreoElectronico = user.CorreoElectronico;
-            userToUpdate.Genero = user.Genero;
-            userToUpdate.FechaNacimiento = user.FechaNacimiento;
-            _context.SaveChanges();
-            return Ok(userToUpdate);
+            catch (ArgumentException ex)
+            {
+                return BadRequest(new { Message = ex.Message });
+            }
         }
 
         [HttpDelete("{id}")]
         public IActionResult Delete([FromRoute] int id)
         {
-            var user = _context.Users.FirstOrDefault(u => u.Id == id);
-            if (user == null)
-            {
-                return NotFound(new{ Message = "Usuario no encontrado."});
-            }
-            _context.Users.Remove(user);
-            _context.SaveChanges();
-            return Ok("Usario eliminado exitosamente");
+        var user = _userRepository.Delete(id);
+        if (user == null)
+        {
+            return NotFound(new { Message = "Usuario no encontrado." });
+        }
+        return Ok("Usuario eliminado exitosamente");
         }
 
     }
